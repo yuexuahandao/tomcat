@@ -55,11 +55,12 @@ public class CatalinaProperties {
 
 
     /**
-     * Load properties.
+     * Load properties. 加载一些配置属性，并将值置入系统的属性中
      */
     private static void loadProperties() {
 
         InputStream is = null;
+        // 默认读取的文件名
         String fileName = "catalina.properties";
 
         try {
@@ -78,6 +79,7 @@ public class CatalinaProperties {
 
         if (is == null) {
             try {
+                // 没有属性制定的话，需要从安装目录的conf下读取，注意这个fileName可能是指定的也可能是默认的
                 File home = new File(Bootstrap.getCatalinaBase());
                 File conf = new File(home, "conf");
                 File propsFile = new File(conf, fileName);
@@ -89,6 +91,7 @@ public class CatalinaProperties {
 
         if (is == null) {
             try {
+                // 都没有的话，这个默认路径
                 is = CatalinaProperties.class.getResourceAsStream
                     ("/org/apache/catalina/startup/catalina.properties");
             } catch (Throwable t) {
@@ -124,6 +127,7 @@ public class CatalinaProperties {
         while (enumeration.hasMoreElements()) {
             String name = (String) enumeration.nextElement();
             String value = properties.getProperty(name);
+            // 将有配置的属性置入系统的属性中
             if (value != null) {
                 System.setProperty(name, value);
             }

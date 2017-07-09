@@ -81,7 +81,7 @@ public class Catalina {
     // ----------------------------------------------------- Instance Variables
 
     /**
-     * Use await.
+     * Use await. 启动完成后是否进入等待状态
      */
     protected boolean await = false;
 
@@ -501,14 +501,18 @@ public class Catalina {
 
     /**
      * Start a new server instance.
+     *
+     * 根据conf/server.xml启动一个Server实例（通过开源项目Digester完成），并调用server的init方法
      */
     public void load() {
 
         long t1 = System.nanoTime();
 
+        // 创建临时文件夹
         initDirs();
 
         // Before digester - it may be needed
+        // 使用digester来解析xml配置文件
         initNaming();
 
         // Create and execute our Digester
@@ -575,8 +579,10 @@ public class Catalina {
             }
 
             try {
+                // 开始使用digester接卸xml文件（conf/server.xml）
                 inputSource.setByteStream(inputStream);
                 digester.push(this);
+                // 解析并创建Server
                 digester.parse(inputSource);
             } catch (SAXParseException spe) {
                 log.warn("Catalina.start using " + getConfigFile() + ": " +
@@ -605,6 +611,7 @@ public class Catalina {
 
         // Start the new server
         try {
+            // 调用server的init方法（进入查看）
             getServer().init();
         } catch (LifecycleException e) {
             if (Boolean.getBoolean("org.apache.catalina.startup.EXIT_ON_INIT_FAILURE")) {
@@ -775,7 +782,7 @@ public class Catalina {
         System.setErr(new SystemLogHandler(System.err));
     }
 
-
+    // 设置命名服务
     protected void initNaming() {
         // Setting additional variables
         if (!useNaming) {

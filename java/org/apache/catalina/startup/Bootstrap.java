@@ -44,6 +44,8 @@ import org.apache.juli.logging.LogFactory;
  * other classes they depend on, such as an XML parser) out of the system
  * class path and therefore not visible to application level classes.
  *
+ * Catalina的加载器类，创建一个加载类来加载Catalina的内部类（jar包路径由"catalina.home"指定目录）
+ *
  * @author Craig R. McClanahan
  * @author Remy Maucherat
  */
@@ -61,11 +63,15 @@ public final class Bootstrap {
 
     private static final Pattern PATH_PATTERN = Pattern.compile("(\".*?\")|(([^,])*)");
 
+    /**
+     * 这段代码是用来设置catalina.home和catalina.base这两个属性
+     * http://yuri-liuyu.iteye.com/blog/960964
+     */
     static {
         // Will always be non-null
         String userDir = System.getProperty("user.dir");
 
-        // Home first
+        // Home first 取得属性cataline.home
         String home = System.getProperty(Globals.CATALINA_HOME_PROP);
         File homeFile = null;
 
@@ -104,12 +110,14 @@ public final class Bootstrap {
         }
 
         catalinaHomeFile = homeFile;
+        // 这里是更新一下cataline.home
         System.setProperty(
                 Globals.CATALINA_HOME_PROP, catalinaHomeFile.getPath());
 
         // Then base
         String base = System.getProperty(Globals.CATALINA_BASE_PROP);
         if (base == null) {
+            // 如果没有的话，就使用catalina.home作为catalina.base的值
             catalinaBaseFile = catalinaHomeFile;
         } else {
             File baseFile = new File(base);
@@ -141,6 +149,9 @@ public final class Bootstrap {
     // -------------------------------------------------------- Private Methods
 
 
+    /**
+     * 初始化tomcat级别的类加载器、建立类加载器的关系等
+     */
     private void initClassLoaders() {
         try {
             commonLoader = createClassLoader("common", null);
@@ -160,11 +171,12 @@ public final class Bootstrap {
 
     private ClassLoader createClassLoader(String name, ClassLoader parent)
         throws Exception {
-
+        // 有没有自己指定类加载器common.loader、server.loader、shared.loader加载的jar文件*.jar、.jar或者是目录
         String value = CatalinaProperties.getProperty(name + ".loader");
         if ((value == null) || (value.equals("")))
             return parent;
 
+        // 替换嵌套的属性
         value = replace(value);
 
         List<Repository> repositories = new ArrayList<>();
@@ -198,12 +210,14 @@ public final class Bootstrap {
             }
         }
 
+        // 建立加载类路劲的类加载器
         return ClassLoaderFactory.createClassLoader(repositories, parent);
     }
 
 
     /**
      * System property replacement in the given string.
+     * 替换${}指定的属性
      *
      * @param str The original string
      * @return the modified string
@@ -250,12 +264,14 @@ public final class Bootstrap {
 
     /**
      * Initialize daemon.
+     * 初始化daemon
      * @throws Exception Fatal initialization error
      */
     public void init() throws Exception {
 
         initClassLoaders();
 
+        // 设置当前线程的类加载器
         Thread.currentThread().setContextClassLoader(catalinaLoader);
 
         SecurityClassLoad.securityClassLoad(catalinaLoader);
@@ -263,6 +279,7 @@ public final class Bootstrap {
         // Load our startup class and call its process() method
         if (log.isDebugEnabled())
             log.debug("Loading startup class");
+        // 加载Catalina类并进行初始化（代理模式）
         Class<?> startupClass =
             catalinaLoader.loadClass
             ("org.apache.catalina.startup.Catalina");
@@ -304,6 +321,7 @@ public final class Bootstrap {
             param = new Object[1];
             param[0] = arguments;
         }
+        // 这里就是调用Catalina的load方法进行加载操作
         Method method =
             catalinaDaemon.getClass().getMethod(methodName, paramTypes);
         if (log.isDebugEnabled())
@@ -315,6 +333,7 @@ public final class Bootstrap {
 
     /**
      * getServer() for configtest
+     * 代理使用Catalina获取server
      */
     private Object getServer() throws Exception {
 

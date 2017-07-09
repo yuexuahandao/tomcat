@@ -761,6 +761,8 @@ public class Digester extends DefaultHandler2 {
      * parser that contains a schema with a DTD.
      * @return the XML reader
      * @exception SAXException if no XMLReader can be instantiated
+     *
+     * 根据server.xml设置Catalina实例中的Server属性。this是一层一层传进来的。
      */
     public XMLReader getXMLReader() throws SAXException {
         if (reader == null) {
